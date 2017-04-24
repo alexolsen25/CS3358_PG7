@@ -1,0 +1,244 @@
+// Authors: Emily Beaudoin - 4, Alex Olsen - 30
+// Due Date: 04/26/17
+// Assignment Number: 7
+// Spring - 2017 - CS 3358 - 2
+// Instructor: Husain Gholoom
+//
+// This program displays an inventory of objects and allows the user to perform
+// several operations to the inventory. A list is displayed for the user,
+// consisting of the options the user may use for the inventory. Option 1 will
+// redisplay the inventory list for the user. Option 2 allows the user to search
+// the inventory for a specific integer between 100-500. Option 3 allows the
+// user to add an object to the inventory. Option 4 allows the user to remove
+// the object from the inventory. Option 5 exits the program while
+// simultaneously displaying how many times the program hashed the inventory and
+// how many times the inventory was probed from object collisions.
+
+// The user is able to re-run the program as desired before voluntarily exiting
+// the program by entering a 5.
+
+#include <iostream>
+#include <cstdlib>
+#include <iomanip>
+
+using namespace std;
+
+const int size = 30; //size of array
+
+class Hashinventory
+{
+    private:
+        int array[size]; //array of int objects
+    public:
+        Hashinventory(); //constructor to initialize all objects to -1
+        ~Hashinventory(); //destructor to delete array
+
+        int search(int); //searches inventory for specific value
+        void display(); //show objects in inventory
+        void addObject(int object, int &positionCount, int &probeCount);
+        //adds object to inventory
+        void deleteObject(int value); //deletes a number from the array
+};
+
+Hashinventory::~Hashinventory()
+{
+    delete [] array;
+}
+
+Hashinventory::Hashinventory()
+{
+    for (int i=0; i<size; i++)
+    {
+        array[i] = -1; //set all values to -1 indicating empty slot
+    }
+}
+
+int Hashinventory::search(int object)
+{
+    for(int i=0; i<size; i++)
+    {
+        if(array[i] == object)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void Hashinventory::addObject(int object, int &positionCount, int &probeCount)
+{
+    if(object < 100 && object > 500)
+        cout << "\n\n***Number Must Be Between 100-500***\n"
+             << "***Item Was Not Added***\n";
+    else if(positionCount == size)
+        cout << "\n\n***Object Inventory is Full***\n";
+    else
+    {
+        int temp = object, //holds the value to be addObjected
+            index = object%size; //hash function for index value
+
+        while(array[index] != -1 && array[index] != object)
+        {
+            temp = temp+1; //linear probe for hash collision
+            index = temp%size; //reassigns index to new position
+            probeCount++; //counts probes from collisions
+        }
+
+        array[index] = object;
+        positionCount++;
+    }
+
+}
+
+void Hashinventory::deleteObject(int object)
+{
+    int index = search(object);
+
+    if (index == -1)
+    {
+        cout << "\nThe Entered Object Was Not Found.";
+        return;
+    }
+    while(index < size - 1)
+    {
+        array[index] = array[index + 1];
+        index++;
+    }
+    array[size-1] = -1;
+    cout << "\nThe Object " << object << " Was Deleted From The Inventory.";
+}
+
+void Hashinventory::display()
+{
+    cout << "\nCurrent Object Inventory:\n";
+    for(int i=0; i < size/2; i++)
+    {
+        cout << setw(3) << array[i] << "  "; //displays first half of the array
+    }
+    cout << endl;
+    for(int i = size/2; i < size; i++)
+    {
+        cout << setw(3) << array[i] << "  "; //displays second half of the array
+    }
+}
+
+int main()
+{
+    int positionCount = 0; //count the amount a position is hashed
+    int probeCount = 0; //count the amount of collisions
+    int count = 0; //count to fill half of the array
+    int random = 0; //random number to be addObjected into the array
+    int choice, //holds users menu selection
+        value, //holds users value being searched for
+        add,
+        remove;
+
+    Hashinventory inventory; //initialize array data
+
+    for(int i=0; i <= size/2; i++)
+    {
+        random = rand() % 400 + 100; //generates random variable between 100-500
+        inventory.addObject(random, positionCount, probeCount); //generated number sent to addObject function
+    }
+
+    cout << "**********Object Storage Program**********";
+    inventory.display();
+
+    while(true)
+    {
+        cout << "\n\nObject Storage Menu\n"
+             << "Enter the corresponding number of your choice:\n"
+             << "(1)Display Current Inventory\n"
+             << "(2)Search Inventory For An Object\n"
+             << "(3)Add New Object Into Inventory\n"
+             << "(4)Delete Object From Inventory\n"
+             << "(5)Exit Program\n"
+             << "Choice: ";
+
+        while(!(cin >> choice))//loop to ensure correct data type
+        {
+				cout << "\n*****Invalid Option*****\n"
+					 << "Please Enter an Integer From the Menu\n";
+				cin.clear();
+				cin.ignore();
+        }
+
+        switch(choice)
+        {
+            case 1:
+                inventory.display();
+                break;
+            case 2:
+                cout << "\n***Search***\n"
+                     << "Enter an object number between 100 and 500: ";
+                while(!(cin >> value))//loop to ensure correct data type
+                {
+                    cout << "\n*****Invalid Option*****\n"
+                         << "Please Enter an Integer between 100 and 500: ";
+				    cin.clear();
+				    cin.ignore();
+                } //prompts user for value to search for
+
+                if(inventory.search(value) == -1) //if value is not found
+                {
+                    cout << "The value " << value << " was not found within"
+                         << " the Inventory";
+                }
+                else //displays location of value searched for
+                {
+                    if(inventory.search(value) > size/2)
+                    {
+                        cout << "The value " << value << " was found at"
+                             << " position " << inventory.search(value)
+                             << " within the Inventory";
+                    }
+                    else
+                        cout << "The value " << value << " was found at"
+                             << " position " << inventory.search(value) + 1
+                             << " within the Inventory";
+                }
+                break;
+            case 3:
+                cout << "\n***Add***\n"
+                     << "Enter an object number between 100 and 500: ";
+                while(!(cin >> add))//loop to ensure correct data type
+                {
+                    cout << "\n*****Invalid Option*****\n"
+                         << "Please Enter an Integer between 100 and 500: ";
+				    cin.clear();
+				    cin.ignore();
+                } //prompts user for value to search for
+
+                inventory.addObject(add, positionCount, probeCount);
+                inventory.display();
+                break;
+            case 4:
+                cout << "\n***Delete***\n"
+                     << "Enter an object number between 100 and 500: ";
+                while(!(cin >> remove))//loop to ensure correct data type
+                {
+                    cout << "\n*****Invalid Option*****\n"
+                         << "Please Enter an Integer between 100 and 500: ";
+				    cin.clear();
+				    cin.ignore();
+                } //prompts user for value to search for
+
+                inventory.deleteObject(remove);
+                break;
+            case 5:
+                cout << "\nThe number of times each position was hashed: "
+                     << positionCount << endl
+                     << "The number of linear probes for each collision: "
+                     << probeCount
+                     << "\n\nCreated by Emily Beaudoin and Alex Olsen\n"
+                     << "April 2017\n" << endl << endl;
+
+                inventory.~Hashinventory();
+
+                return 0;
+            default: cout << "\n*****Invalid Option*****\n"
+					      << "Please Enter an Integer From the Menu\n";
+        }
+    }
+}
